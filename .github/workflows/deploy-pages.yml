@@ -1,0 +1,67 @@
+name: Deploy MapBasic WebGIS
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - name: Configure Pages
+        uses: actions/configure-pages@v5
+
+      - name: Assemble site
+        run: |
+          set -euo pipefail
+          mkdir -p _site
+          cp index.html _site/index.html
+          touch _site/.nojekyll
+
+      - name: Download canonical basemap.pmtiles
+        run: |
+          set -euo pipefail
+          curl -fL --retry 5 --retry-delay 3 \
+            https://github.com/xulytiengviet/basemap/releases/download/v1.2.0/basemap.pmtiles \
+            -o _site/basemap.pmtiles
+
+      - name: Verify PMTiles
+        run: |
+          set -euo pipefail
+          expected_size=117829388
+          expected_sha=ff62a0549c722905ec30538fd4336bc93960e9a593c0eabe99600bc40ecbe77c
+          actual_size="$(stat -c%s _site/basemap.pmtiles)"
+          actual_sha="$(sha256sum _site/basemap.pmtiles | awk '{print $1}')"
+          test "$actual_size" = "$expected_size"
+          test "$actual_sha" = "$expected_sha"
+          test "$(head -c 7 _site/basemap.pmtiles)" = "PMTiles"
+          echo "Verified canonical PMTiles: $actual_size bytes / $actual_sha"
+
+      - name: Upload Pages artifact
+        uses: actions/upload-pages-artifact@v4
+        with:
+          path: _site
+
+  deploy:
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    runs-on: ubuntu-latest
+    needs: build
+    steps:
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
