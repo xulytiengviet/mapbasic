@@ -39,7 +39,7 @@
         <b>SDK</b><br>
         <code>https://cdn.jsdelivr.net/gh/xulytiengviet/basemap@v1.2.0/sdk/basemap.min.js</code><br><br>
         <b>PMTiles</b><br>
-        <code id="archiveText">./basemap.pmtiles</code>
+        <code>https://xulytiengviet.github.io/mapbasic/basemap.pmtiles</code>
       </div>
       <div id="error" class="error"></div>
     </div>
@@ -47,11 +47,10 @@
 
   <div class="brand">MapBasic · Long Ngo Basemap SDK</div>
 
-  <!-- SDK nhúng đúng theo basemap v1.2.0; archive được override về cùng origin để tránh CORS. -->
   <script
     src="https://cdn.jsdelivr.net/gh/xulytiengviet/basemap@v1.2.0/sdk/basemap.min.js"
     data-target="map"
-    data-archive="./basemap.pmtiles"
+    data-archive="https://xulytiengviet.github.io/mapbasic/basemap.pmtiles"
     data-center="108.984375,12.0079884"
     data-zoom="5"
     data-navigation="true"
@@ -67,7 +66,6 @@
     const state = document.getElementById('state');
     const stateText = document.getElementById('stateText');
     const errorBox = document.getElementById('error');
-    document.getElementById('archiveText').textContent = new URL('./basemap.pmtiles', location.href).href;
 
     function network(){const ok=navigator.onLine;net.className='pill '+(ok?'ok':'bad');netText.textContent=ok?'Internet: Online':'Internet: Offline'}
     function fail(msg){state.className='pill bad';stateText.textContent='Basemap: Lỗi';errorBox.textContent=msg;errorBox.classList.add('show')}
@@ -76,7 +74,6 @@
 
     addEventListener('longngo-basemap-ready', e => {
       map = e.detail.map;
-      ready();
       map.on('error', ev => {
         const message = ev?.error?.message || 'Không tải được tile PMTiles.';
         console.error('[MapBasic]', ev);
@@ -85,7 +82,7 @@
       map.once('idle', ready);
     });
 
-    setTimeout(()=>{if(!map && !document.querySelector('#map canvas')) fail('SDK chưa tạo được bản đồ. Hãy kiểm tra kết nối jsDelivr hoặc GitHub Pages deployment.');},8000);
+    setTimeout(()=>{if(!map) fail('SDK chưa tạo được bản đồ. Kiểm tra jsDelivr hoặc PMTiles URL.');},8000);
 
     document.getElementById('homeBtn').onclick=()=>{if(map) map.fitBounds(BOUNDS,{padding:24,duration:600})};
     document.getElementById('reloadBtn').onclick=()=>location.reload();
